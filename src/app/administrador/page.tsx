@@ -1,181 +1,356 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-import Link from "next/link";
+import React, { JSX, useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
+import Link from 'next/link';
 import {
-  User, Settings, LogOut, ChevronDown, Sun, Moon,
-  Shield, UserPlus, Search, Edit, Trash2, Plus, X, Check
-} from "lucide-react";
+  User,
+  Settings,
+  LogOut,
+  ChevronDown,
+  Sun,
+  Moon,
+  Plus,
+  Trash2,
+  Edit,
+  Search as SearchIcon,
+} from 'lucide-react';
+
+type UserItem = {
+  id: number;
+  nome: string;
+  email: string;
+  cargo: string;
+  status?: 'Ativo' | 'Inativo' | string;
+};
 
 const MENU = [
-  { key: "dashboard", name: "Dashboard", icon: "/Images/Dashboard.png", path: "/dashboard" },
-  { key: "administrador", name: "Administrador", icon: "/Images/Admin.png", path: "/administrador" },
-  { key: "central", name: "Central de Dados", icon: "/Images/Data.png", path: "/central" },
-  { key: "outage", name: "Outage & OS", icon: "/Images/Outage.png", path: "/outage" },
-  { key: "estoque", name: "Estoque", icon: "/Images/Package.png", path: "/estoque" },
-  { key: "relatorios", name: "Relatórios", icon: "/Images/Chart.png", path: "/relatorios" },
-  { key: "settings", name: "Configurações", icon: "/Images/Settings.png", path: "/settings" },
+  { key: 'dashboard', name: 'Dashboard', icon: '/Images/Dashboard.png', path: '/dashboard' },
+  { key: 'administrador', name: 'Administrador', icon: '/Images/Admin.png', path: '/administrador' },
+  { key: 'central', name: 'Central de Dados', icon: '/Images/Data.png', path: '/central' },
+  { key: 'outage', name: 'Outage & OS', icon: '/Images/Outage.png', path: '/outage' },
+  { key: 'estoque', name: 'Estoque', icon: '/Images/Package.png', path: '/estoque' },
+  { key: 'relatorios', name: 'Relatórios', icon: '/Images/Chart.png', path: '/relatorios' },
+  { key: 'settings', name: 'Configurações', icon: '/Images/Settings.png', path: '/configuracoes/admin' },
+] as const;
+
+const initialUsers: UserItem[] = [
+  { id: 1, nome: 'Carlos Mendes', email: 'carlos@masterfrio.com', cargo: 'Administrador', status: 'Ativo' },
+  { id: 2, nome: 'Luciana Alves', email: 'luciana@masterfrio.com', cargo: 'Financeiro', status: 'Ativo' },
+  { id: 3, nome: 'Rafael Gomes', email: 'rafael@masterfrio.com', cargo: 'Técnico', status: 'Inativo' },
 ];
 
-export default function Administrador() {
-  const [darkMode, setDarkMode] = useState(false);
-  const [userOpen, setUserOpen] = useState(false);
-
-  const [users, setUsers] = useState([
-    { id: 1, nome: "Carlos Mendes", cargo: "Administrador", status: "Ativo", ultimoLogin: "10/11/2025 14:22", email: "carlos@masterfrio.com" },
-    { id: 2, nome: "Luciana Alves", cargo: "Financeiro", status: "Ativo", ultimoLogin: "09/11/2025 19:40", email: "luciana@masterfrio.com" },
-  ]);
-
-  const [admins, setAdmins] = useState([
-    { id: 101, nome: "Carlos Mendes", cargo: "Administrador", status: "Ativo", ultimoLogin: "10/11/2025 14:22", email: "carlos@masterfrio.com" },
-  ]);
-
-  const [search, setSearch] = useState("");
-  const [filtered, setFiltered] = useState(users);
-
-  const [openAddUser, setOpenAddUser] = useState(false);
-  const [openAddAdmin, setOpenAddAdmin] = useState(false);
-
-  const [nomeUser, setNomeUser] = useState("");
-  const [emailUser, setEmailUser] = useState("");
-  const [cargoUser, setCargoUser] = useState("Atendente");
-
-  const [nomeAdmin, setNomeAdmin] = useState("");
-  const [emailAdmin, setEmailAdmin] = useState("");
-  const [senhaAdmin, setSenhaAdmin] = useState("");
+export default function Administrador(): JSX.Element {
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem('mf:dark');
+      if (v !== null) return JSON.parse(v);
+      return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)')?.matches;
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
-    setFiltered(users.filter(u => u.nome.toLowerCase().includes(search.toLowerCase())));
-  }, [users, search]);
+    try {
+      localStorage.setItem('mf:dark', JSON.stringify(darkMode));
+    } catch {}
+    const root = document.documentElement;
+    if (darkMode) root.classList.add('dark');
+    else root.classList.remove('dark');
+  }, [darkMode]);
 
-  const handleDelete = (id: number) => {
-    if (confirm("Remover usuário?")) {
-      setUsers(prev => prev.filter(u => u.id !== id));
-      setAdmins(prev => prev.filter(a => a.id !== id));
+  const [userOpen, setUserOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<UserItem | null>(null);
+  const [users, setUsers] = useState<UserItem[]>(initialUsers);
+  const [query, setQuery] = useState('');
+
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [cargo, setCargo] = useState('');
+
+  useEffect(() => {
+    if (!modalOpen) {
+      setEditing(null);
+      setNome('');
+      setEmail('');
+      setCargo('');
     }
+  }, [modalOpen]);
+
+  const openNew = () => {
+    setEditing(null);
+    setModalOpen(true);
   };
+
+  const openEdit = (u: UserItem) => {
+    setEditing(u);
+    setNome(u.nome);
+    setEmail(u.email);
+    setCargo(u.cargo);
+    setModalOpen(true);
+  };
+
+  const saveUser = () => {
+    if (!nome.trim() || !email.trim() || !cargo.trim()) {
+      return alert('Preencha nome, email e cargo.');
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)) return alert('Email inválido.');
+
+    if (editing) {
+      setUsers(prev => prev.map(p => (p.id === editing.id ? { ...p, nome: nome.trim(), email: email.trim(), cargo: cargo.trim() } : p)));
+    } else {
+      setUsers(prev => [{ id: Date.now(), nome: nome.trim(), email: email.trim(), cargo: cargo.trim(), status: 'Ativo' }, ...prev]);
+    }
+    setModalOpen(false);
+  };
+
+  const removeUser = (id: number) => {
+    if (!confirm('Remover usuário?')) return;
+    setUsers(prev => prev.filter(u => u.id !== id));
+  };
+
+  const filtered = users.filter(u => u.nome.toLowerCase().includes(query.toLowerCase()) || u.email.toLowerCase().includes(query.toLowerCase()));
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
-      className={`min-h-screen font-inter p-8 transition-colors duration-500 antialiased ${
-        darkMode
-          ? "bg-gradient-to-br from-[#0e1628] via-[#121b31] to-[#1c2741] text-white"
-          : "bg-gradient-to-br from-white via-[#f3f8ff] to-[#e4efff] text-[#1a2740]"
-      }`}
+      className="min-h-screen font-sans p-8 transition-colors duration-500 antialiased bg-background"
     >
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
-
-        {/* SIDEBAR (Mudar dps) */}
-        <aside className={`rounded-2xl p-6 flex flex-col justify-between border shadow-[0_6px_30px_rgba(0,0,0,0.06)] ${
-          darkMode ? "bg-[#19233b]/60 border-[#2a3658]" : "bg-gradient-to-br from-[#ffffff] to-[#f0f6ff] border-[#e2ecff]"
-        }`}>
+      <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
+        {/* Sidebar */}
+        <aside className="rounded-2xl p-6 flex flex-col justify-between border shadow-sm bg-card border-border">
           <div>
-            <div className="flex items-center justify-center mb-6">
-              <Link href="/dashboard"><Image src="/Images/MasterFrio_Logo.png" alt="Logo" width={160} height={40} className="h-10 w-auto" /></Link>
+            <div className="flex items-center justify-center mb-8">
+              <Link href="/dashboard" aria-label="Home">
+                <Image src="/Images/MasterFrio_Logo.png" alt="MasterFrio" width={160} height={40} className="h-10 w-auto" priority />
+              </Link>
             </div>
-            <nav className="flex flex-col gap-2 text-sm">
+
+            <nav className="flex flex-col gap-2 text-sm" aria-label="Main navigation">
               {MENU.map(m => (
-                <Link key={m.key} href={m.path}
-                  className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all ${
-                    m.key === "administrador"
-                      ? darkMode ? "bg-[#243459] text-blue-100 shadow-inner border border-[#2e3a5f]"
-                      : "bg-blue-50 text-blue-700 shadow-inner border border-blue-100"
-                      : darkMode ? "text-blue-100 hover:bg-[#243459]" : "text-[#1a2740] hover:bg-blue-50"
-                  }`}>
-                  <div className="w-5 h-5"><Image src={m.icon} alt="" width={20} height={20} /></div>
+                <Link
+                  key={m.key}
+                  href={m.path}
+                  className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all duration-200 ${
+                    m.key === 'administrador' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  <div className="w-5 h-5 flex items-center justify-center">
+                    <Image src={m.icon} alt={m.name} width={20} height={20} className="opacity-80" />
+                  </div>
                   <span className="font-medium">{m.name}</span>
                 </Link>
               ))}
             </nav>
           </div>
-          <div className="mt-6"></div>
+
+          <div className="mt-6">
+            <button
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border text-muted-foreground hover:bg-muted transition-colors"
+              onClick={() => alert('Logout (implemente a lógica real)')}
+            >
+              <LogOut size={18} />
+              <span className="text-sm font-semibold">Logout</span>
+            </button>
+            <div className="text-xs mt-6 text-center text-muted-foreground">© 2025 Masterfrio</div>
+          </div>
         </aside>
 
-        {/* MAIN + HEADER (igual, mudar dps) */}
+        {/* Main */}
         <main className="space-y-6">
-          <header className="flex items-center justify-between"></header>
+          {/* Header */}
+          <header className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">Administrador</h1>
+              <p className="text-sm text-muted-foreground mt-1">Gerencie usuários, permissões e configurações administrativas.</p>
+            </div>
 
-          <section className={`bg-white border rounded-2xl p-6 shadow-sm ${darkMode ? "bg-[#0f1724]/60 border-[#223054]" : "border-[#e3edff]"}`}>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Shield size={18} className="text-blue-600" />
-                  <div>
-                    <div className={`text-sm font-semibold ${darkMode ? "text-blue-100" : "text-blue-700"}`}>Usuários Cadastrados</div>
-                    <div className="text-xs text-blue-500">Gerencie contas, permissões e atividade</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Search size={16} className="absolute left-3 top-3 top-2.5 text-blue-400" />
-                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar usuário..." className="pl-10 pr-3 py-2 rounded-xl border border-blue-100 focus:ring-2 focus:ring-blue-300 text-sm" />
-                  </div>
-                  <button onClick={() => setOpenAddUser(true)} className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-xl">
-                    <UserPlus size={16} /> Adicionar
-                  </button>
-                  <button onClick={() => setOpenAddAdmin(true)} className="flex items-center gap-2 border px-4 py-2 rounded-xl">
-                    <Plus size={16} /> Cadastrar Admin
-                  </button>
-                </div>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setDarkMode(d => !d)}
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
+                aria-pressed={darkMode}
+                aria-label="Alternar tema"
+              >
+                {darkMode ? <Sun size={20} className="text-accent" /> : <Moon size={20} className="text-muted-foreground" />}
+              </button>
+
+              <div className="relative">
+                <button
+                  onClick={() => setUserOpen(s => !s)}
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
+                  aria-haspopup="true"
+                  aria-expanded={userOpen}
+                >
+                  <User size={18} className="text-primary" />
+                  <span className="text-sm font-medium">Pedro G.</span>
+                  <ChevronDown size={16} className={`transition-transform ${userOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {userOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      className="absolute top-[110%] right-0 w-48 rounded-xl shadow-lg border border-border bg-card z-50"
+                      role="menu"
+                    >
+                      <button className="w-full text-left px-4 py-3 hover:bg-muted rounded-t-xl flex items-center gap-3 text-sm" role="menuitem">
+                        <User size={16} /> Perfil
+                      </button>
+                      <button className="w-full text-left px-4 py-3 hover:bg-muted flex items-center gap-3 text-sm" role="menuitem">
+                        <Settings size={16} /> Configurações
+                      </button>
+                      <button className="w-full text-left px-4 py-3 hover:bg-destructive/10 rounded-b-xl flex items-center gap-3 text-sm text-destructive" role="menuitem">
+                        <LogOut size={16} /> Sair
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </header>
+
+          {/* Usuários Card */}
+          <section className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Usuários Cadastrados</h3>
+                <p className="text-sm text-muted-foreground mt-1">Gerencie e edite as contas do sistema.</p>
               </div>
 
-              <div className={`rounded-xl border ${darkMode ? "border-[#223054]/40 bg-[#061025]/30" : "border-blue-100 bg-white"} p-4`}>
-                <table className="w-full text-sm">
-                  <thead className="text-blue-500 uppercase text-xs tracking-wide">
-                    <tr><th className="pb-2 text-left">Nome</th><th className="pb-2 text-left">Cargo</th><th className="pb-2 text-left">Status</th><th className="pb-2 text-left">Último Login</th><th className="pb-2 text-right">Ações</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-blue-50">
-                    {filtered.map(u => (
-                      <tr key={u.id} className="hover:bg-blue-50/30">
-                        <td className="py-2 font-medium">{u.nome}</td>
-                        <td className="py-2">{u.cargo}</td>
-                        <td className="py-2"><span className={`px-2 py-1 rounded-md text-xs ${u.status === "Ativo" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{u.status}</span></td>
-                        <td className="py-2 text-blue-600">{u.ultimoLogin}</td>
-                        <td className="py-2 text-right flex justify-end gap-2">
-                          <button className="p-2 hover:bg-blue-50 rounded-md"><Edit size={14} className="text-blue-600" /></button>
-                          <button onClick={() => handleDelete(u.id)} className="p-2 hover:bg-red-100 rounded-md"><Trash2 size={14} className="text-red-600" /></button>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <SearchIcon className="absolute left-3 top-3 text-muted-foreground" size={16} />
+                  <input
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    placeholder="Buscar por nome ou email..."
+                    className="pl-10 pr-3 py-2 rounded-xl border border-border bg-background text-sm w-72"
+                    aria-label="Buscar usuários"
+                  />
+                </div>
+
+                <button
+                  onClick={openNew}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  <Plus size={16} /> Novo Usuário
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-muted-foreground uppercase text-xs tracking-wide border-b border-border">
+                  <tr>
+                    <th className="pb-3 text-left font-medium">Nome</th>
+                    <th className="pb-3 text-left font-medium">E-mail</th>
+                    <th className="pb-3 text-left font-medium">Cargo</th>
+                    <th className="pb-3 text-right font-medium">Ações</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-border">
+                  {filtered.length ? (
+                    filtered.map(u => (
+                      <tr key={u.id} className="hover:bg-muted/50 transition-colors">
+                        <td className="py-4 font-medium">{u.nome}</td>
+                        <td className="py-4 text-muted-foreground">{u.email}</td>
+                        <td className="py-4">{u.cargo}</td>
+                        <td className="py-4 text-right">
+                          <div className="inline-flex items-center gap-2">
+                            <button
+                              onClick={() => openEdit(u)}
+                              title={`Editar ${u.nome}`}
+                              className="p-2 rounded-lg hover:bg-muted transition-colors"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => removeUser(u.id)}
+                              title={`Remover ${u.nome}`}
+                              className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-center text-muted-foreground">
+                        Nenhum usuário encontrado
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </section>
         </main>
       </div>
 
+      {/* Modal: Novo / Editar Usuário */}
       <AnimatePresence>
-        {openAddUser && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black opacity-50" onClick={() => setOpenAddUser(false)} />
-            <div className={`relative bg-white rounded-2xl p-6 shadow-xl max-w-md w-full ${darkMode ? "bg-[#071226] text-white" : ""}`}>
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-50 rounded"><UserPlus size={20} className="text-blue-600" /></div>
-                  <div>Adicionar Usuário</div>
+        {modalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+            aria-modal="true"
+            role="dialog"
+            aria-label={editing ? 'Editar usuário' : 'Novo usuário'}
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.98, opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-xl"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">{editing ? 'Editar Usuário' : 'Novo Usuário'}</h3>
+                <button onClick={() => setModalOpen(false)} className="p-2 rounded-md hover:bg-muted">
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Nome</label>
+                  <input value={nome} onChange={e => setNome(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-xl border border-border bg-background" />
                 </div>
-                <button onClick={() => setOpenAddUser(false)}><X size={18} /></button>
+
+                <div>
+                  <label className="text-sm font-medium">Email</label>
+                  <input value={email} onChange={e => setEmail(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-xl border border-border bg-background" />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Cargo</label>
+                  <input value={cargo} onChange={e => setCargo(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-xl border border-border bg-background" />
+                </div>
               </div>
-              <input placeholder="Nome" value={nomeUser} onChange={e => setNomeUser(e.target.value)} className="w-full border rounded-md px-3 py-2 mb-2" />
-              <input placeholder="Email" value={emailUser} onChange={e => setEmailUser(e.target.value)} className="w-full border rounded-md px-3 py-2 mb-2" />
-              <select value={cargoUser} onChange={e => setCargoUser(e.target.value)} className="w-full border rounded-md px-3 py-2">
-                <option>Atendente</option><option>Técnico</option><option>Financeiro</option><option>Vendedor</option>
-              </select>
-              <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setOpenAddUser(false)} className="px-4 py-2 border rounded-xl">Cancelar</button>
-                <button onClick={() => {
-                  setUsers(prev => [{ id: Date.now(), nome: nomeUser, email: emailUser, cargo: cargoUser, status: "Ativo", ultimoLogin: "—" }, ...prev]);
-                  setOpenAddUser(false); setNomeUser(""); setEmailUser(""); 
-                }} className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl">Criar</button>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-xl border border-border hover:bg-muted transition-colors">
+                  Cancelar
+                </button>
+                <button onClick={saveUser} className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                  {editing ? 'Salvar' : 'Criar'}
+                </button>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </motion.div>

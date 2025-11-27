@@ -1,133 +1,266 @@
 'use client';
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import Image from "next/image";
-import Link from "next/link";
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
+import Link from 'next/link';
 import {
-  User, Settings, LogOut, ChevronDown, Sun, Moon, Database
-} from "lucide-react";
+  User,
+  Settings,
+  LogOut,
+  ChevronDown,
+  Sun,
+  Moon,
+  BarChart3,
+  Wrench,
+  Users,
+  Package,
+  Database,
+} from 'lucide-react';
 
 const MENU = [
-  { key: "dashboard", name: "Dashboard", icon: "/Images/Dashboard.png", path: "/dashboard" },
-  { key: "administrador", name: "Administrador", icon: "/Images/Admin.png", path: "/administrador" },
-  { key: "central", name: "Central de Dados", icon: "/Images/Data.png", path: "/central" },
-  { key: "outage", name: "Outage & OS", icon: "/Images/Outage.png", path: "/outage" },
-  { key: "estoque", name: "Estoque", icon: "/Images/Package.png", path: "/estoque" },
-  { key: "relatorios", name: "Relatórios", icon: "/Images/Chart.png", path: "/relatorios" },
-  { key: "settings", name: "Configurações", icon: "/Images/Settings.png", path: "/settings" },
-];
+  { key: 'dashboard', name: 'Dashboard', icon: '/Images/Dashboard.png', path: '/dashboard' },
+  { key: 'administrador', name: 'Administrador', icon: '/Images/Admin.png', path: '/administrador' },
+  { key: 'central', name: 'Central de Dados', icon: '/Images/Data.png', path: '/central' },
+  { key: 'outage', name: 'Outage & OS', icon: '/Images/Outage.png', path: '/outage' },
+  { key: 'estoque', name: 'Estoque', icon: '/Images/Package.png', path: '/estoque' },
+  { key: 'relatorios', name: 'Relatórios', icon: '/Images/Chart.png', path: '/relatorios' },
+  { key: 'settings', name: 'Configurações', icon: '/Images/Settings.png', path: '/configuracoes/admin' },
+] as const;
 
 export default function CentralDados() {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem('mf:dark');
+      if (v !== null) return JSON.parse(v);
+      return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)')?.matches;
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('mf:dark', JSON.stringify(darkMode));
+    } catch {}
+    const root = document.documentElement;
+    if (darkMode) root.classList.add('dark');
+    else root.classList.remove('dark');
+  }, [darkMode]);
+
   const [userOpen, setUserOpen] = useState(false);
+
+  const cards = [
+    { title: 'Faturamento do Mês', value: 'R$ 84.200', icon: <BarChart3 size={24} /> },
+    { title: 'Ordens Concluídas', value: '128', icon: <Wrench size={24} /> },
+    { title: 'Clientes Ativos', value: '234', icon: <Users size={24} /> },
+    { title: 'Estoque Baixo', value: '12 itens', icon: <Package size={24} /> },
+  ];
+
+  const statusCards = [
+    { title: 'Conector ERP', value: 'Conectado', hint: 'Sincronização ok' },
+    { title: 'Último backup', value: '22/11/2025 10:05', hint: 'Agendado diariamente' },
+    { title: 'Fila de sincronização', value: '0 itens', hint: 'Sem pendências' },
+  ];
+
+  const logs = [
+    '22/11/2025 14:30 – Sincronização com ERP concluída',
+    '22/11/2025 10:05 – Backup automático executado',
+    '22/11/2025 09:12 – Importação de clientes finalizada',
+    '21/11/2025 23:40 – Integração com distribuidor concluída',
+    '21/11/2025 22:01 – Backup agendado executado',
+  ];
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
-      className={`min-h-screen font-inter p-8 transition-colors duration-500 antialiased ${
-        darkMode
-          ? "bg-gradient-to-br from-[#0e1628] via-[#121b31] to-[#1c2741] text-white"
-          : "bg-gradient-to-br from-white via-[#f3f8ff] to-[#e4efff] text-[#1a2740]"
-      }`}
+      className="min-h-screen font-sans p-8 transition-colors duration-500 antialiased bg-background"
     >
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
+      <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
 
-        {/* SIDEBAR (mudar dps) */}
-        <aside className={`rounded-2xl p-6 flex flex-col justify-between border shadow-[0_6px_30px_rgba(0,0,0,0.06)] ${
-          darkMode ? "bg-[#19233b]/60 border-[#2a3658]" : "bg-gradient-to-br from-[#ffffff] to-[#f0f6ff] border-[#e2ecff]"
-        }`}>
+        {/* SIDEBAR */}
+        <aside className="rounded-2xl p-6 flex flex-col justify-between border shadow-sm bg-card border-border">
           <div>
-            <div className="flex items-center justify-center mb-6">
-              <Link href="/dashboard"><Image src="/Images/MasterFrio_Logo.png" alt="Logo" width={160} height={40} className="h-10 w-auto" /></Link>
+            <div className="flex items-center justify-center mb-8">
+              <Link href="/dashboard" aria-label="Home">
+                <Image
+                  src="/Images/MasterFrio_Logo.png"
+                  alt="MasterFrio"
+                  width={160}
+                  height={40}
+                  className="h-10 w-auto"
+                  priority
+                />
+              </Link>
             </div>
+
             <nav className="flex flex-col gap-2 text-sm">
-              {MENU.map(m => (
-                <Link key={m.key} href={m.path}
-                  className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all ${
-                    m.key === "central"
-                      ? darkMode ? "bg-[#243459] text-blue-100 shadow-inner border border-[#2e3a5f]"
-                      : "bg-blue-50 text-blue-700 shadow-inner border border-blue-100"
-                      : darkMode ? "text-blue-100 hover:bg-[#243459]" : "text-[#1a2740] hover:bg-blue-50"
-                  }`}>
-                  <div className="w-5 h-5"><Image src={m.icon} alt="" width={20} height={20} /></div>
-                  <span className="font-medium">{m.name}</span>
-                </Link>
-              ))}
+              {MENU.map(m => {
+                const active = m.key === 'central';
+                return (
+                  <Link
+                    key={m.key}
+                    href={m.path}
+                    className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all duration-200 ${
+                      active
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-foreground hover:bg-muted'
+                    }`}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <Image src={m.icon} alt={m.name} width={20} height={20} className="opacity-80" />
+                    </div>
+                    <span className="font-medium">{m.name}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </div>
+
           <div className="mt-6">
-            <button className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
-              darkMode ? "bg-blue-500/10 border-blue-800 text-blue-300 hover:bg-blue-500/20"
-                : "bg-blue-500/10 border-blue-100 text-blue-600 hover:bg-blue-500/20"
-            }`}>
+            <button
+              onClick={() => alert('Logout')}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border text-muted-foreground hover:bg-muted transition-colors"
+            >
               <LogOut size={18} />
               <span className="text-sm font-semibold">Logout</span>
             </button>
-            <div className={`text-[12px] mt-6 text-center ${darkMode ? "text-blue-400/60" : "text-[#7b8cbf]"}`}>© 2025 Masterfrio</div>
+            <div className="text-xs mt-6 text-center text-muted-foreground">© 2025 Masterfrio</div>
           </div>
         </aside>
 
+        {/* MAIN */}
         <main className="space-y-6">
           <header className="flex items-center justify-between">
             <div>
-              <h1 className={`text-2xl font-bold tracking-tight ${darkMode ? "text-blue-200" : "text-blue-700"}`}>Central de Dados</h1>
-              <p className={`text-sm ${darkMode ? "text-blue-300/70" : "text-blue-500"}`}>Repositório de dados e integrações.</p>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">Central de Dados</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Monitoramento de integrações, backups e sincronizações em tempo real.
+              </p>
             </div>
+
             <div className="flex items-center gap-4">
-              <button onClick={() => setDarkMode(!darkMode)} className="flex items-center gap-2">
-                <Sun size={16} className={`${!darkMode ? "text-yellow-400" : "text-gray-500"}`} />
-                <motion.div animate={{ rotate: darkMode ? 180 : 0 }}>
-                  {darkMode ? <Moon size={16} /> : <Sun size={16} />}
-                </motion.div>
-                <Moon size={16} className={`${darkMode ? "text-blue-300" : "text-gray-400"}`} />
+              <button
+                onClick={() => setDarkMode(d => !d)}
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
+                aria-pressed={darkMode}
+                aria-label="Alternar tema"
+              >
+                {darkMode ? <Sun size={20} className="text-accent" /> : <Moon size={20} className="text-muted-foreground" />}
               </button>
 
               <div className="relative">
-                <button onClick={() => setUserOpen(!userOpen)} className={`flex items-center gap-3 px-4 py-2 rounded-xl ${darkMode ? "bg-[#243459] text-white" : "bg-blue-50 text-[#1a2740]"}`}>
-                  <User size={18} className="text-blue-600 dark:text-blue-300" />
+                <button
+                  onClick={() => setUserOpen(s => !s)}
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
+                  aria-haspopup="true"
+                  aria-expanded={userOpen}
+                >
+                  <User size={18} className="text-primary" />
                   <span className="text-sm font-medium">Pedro G.</span>
-                  <ChevronDown size={16} className={`transition-transform ${userOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown size={16} className={`transition-transform ${userOpen ? 'rotate-180' : ''}`} />
                 </button>
-                {userOpen && (
-                  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                    className={`absolute top-[110%] right-0 w-48 rounded-xl shadow-lg border ${darkMode ? "bg-[#1b2540] border-[#2a3658]" : "bg-white border-blue-100"}`}>
-                    <button className="w-full text-left px-4 py-2 hover:bg-blue-50 dark:hover:bg-[#243459] flex items-center gap-3 text-sm"><User size={16} />Perfil</button>
-                    <button className="w-full text-left px-4 py-2 hover:bg-blue-50 dark:hover:bg-[#243459] flex items-center gap-3 text-sm"><Settings size={16} />Configurações</button>
-                    <button className="w-full text-left px-4 py-2 hover:bg-red-100 dark:hover:bg-[#2e3a5f] flex items-center gap-3 text-sm text-red-500"><LogOut size={16} />Sair</button>
-                  </motion.div>
-                )}
+
+                <AnimatePresence>
+                  {userOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      className="absolute top-[110%] right-0 w-48 rounded-xl shadow-lg border border-border bg-card z-50"
+                      role="menu"
+                    >
+                      <button className="w-full text-left px-4 py-3 hover:bg-muted rounded-t-xl flex items-center gap-3 text-sm" role="menuitem">
+                        <User size={16} /> Perfil
+                      </button>
+                      <button className="w-full text-left px-4 py-3 hover:bg-muted flex items-center gap-3 text-sm" role="menuitem">
+                        <Settings size={16} /> Configurações
+                      </button>
+                      <button className="w-full text-left px-4 py-3 hover:bg-destructive/10 rounded-b-xl flex items-center gap-3 text-sm text-destructive" role="menuitem">
+                        <LogOut size={16} /> Sair
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </header>
 
-          <section className={`bg-white border rounded-2xl p-6 shadow-sm ${darkMode ? "bg-[#0f1724]/60 border-[#223054]" : "border-[#e3edff]"}`}>
+          {/* CONTEÚDO PRINCIPAL */}
+          <section className="bg-card border border-border rounded-2xl p-6 shadow-sm">
             <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <Database size={18} className="text-blue-600" />
-                <div>
-                  <div className={`text-sm font-semibold ${darkMode ? "text-blue-100" : "text-blue-700"}`}>Central de Dados</div>
-                  <div className="text-xs text-blue-500">APIs, integrações e backups</div>
-                </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {cards.map((c, i) => (
+                  <motion.div
+                    key={i}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.18 }}
+                    className="p-5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="text-xs opacity-90 font-medium">{c.title}</div>
+                      <div className="opacity-80">{c.icon}</div>
+                    </div>
+                    <div className="text-3xl font-bold">{c.value}</div>
+                  </motion.div>
+                ))}
               </div>
 
-              <div className={`rounded-xl border p-4 ${darkMode ? "border-[#223054]/40 bg-[#071226]/20" : "border-blue-100 bg-white"}`}>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-3 rounded-md border border-dashed text-sm">Conector ERP: conectado</div>
-                  <div className="p-3 rounded-md border border-dashed text-sm">Último backup: 13/11/2025 02:05</div>
-                  <div className="p-3 rounded-md border border-dashed text-sm">Fila de sincronização: 0 itens</div>
-                </div>
-              </div>
+              {/* Logs + Status */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+                <section>
+                  <h3 className="text-sm font-semibold text-foreground mb-4">Logs do Sistema</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="text-muted-foreground uppercase text-xs tracking-wide border-b border-border">
+                        <tr>
+                          <th className="pb-3 text-left font-medium">Data/Hora</th>
+                          <th className="pb-3 text-left font-medium">Evento</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {logs.map((log, i) => {
+                          const [date, event] = log.split(' – ');
+                          return (
+                            <tr key={i} className="hover:bg-muted/50 transition-colors">
+                              <td className="py-4 text-muted-foreground">{date}</td>
+                              <td className="py-4 font-medium">{event}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
 
-              <div className={`rounded-xl border p-4 text-sm ${darkMode ? "border-[#223054]/40 bg-[#071226]/20" : "border-blue-100 bg-white"}`}>
-                Logs recentes:
-                <ul className="mt-2 list-disc list-inside text-xs text-blue-600/80">
-                  <li>13/11/2025 09:12 – Importação de clientes finalizada</li>
-                  <li>12/11/2025 23:40 – Integração com distribuidor concluída</li>
-                  <li>12/11/2025 22:01 – Backup agendado executado</li>
-                </ul>
+                <aside className="space-y-4">
+                  <div className="p-5 rounded-xl border border-border bg-muted/30">
+                    <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-3">
+                      <Database size={20} className="text-primary" />
+                      Status em Tempo Real
+                    </h4>
+                    <div className="flex flex-col gap-5">
+                      {statusCards.map((s, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600" />
+                            <div>
+                              <div className="text-sm font-medium">{s.title}</div>
+                              <div className="text-xs text-muted-foreground">{s.hint}</div>
+                            </div>
+                          </div>
+                          <div className={`text-sm font-semibold ${s.value.includes('Conectado') || s.value === '0 itens' ? 'text-green-600 dark:text-green-400' : 'text-foreground'}`}>
+                            {s.value}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </aside>
               </div>
             </div>
           </section>
