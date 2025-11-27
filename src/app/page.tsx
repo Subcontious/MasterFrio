@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   User, Settings, LogOut, ChevronDown, Sun, Moon, BarChart3,
-  Wrench, Users, Package, ArrowUpRight
+  Wrench, Users, Package
 } from "lucide-react";
 
 const MENU = [

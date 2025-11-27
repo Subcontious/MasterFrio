@@ -11,7 +11,6 @@ import {
   ChevronDown,
   Sun,
   Moon,
-  Package,
   Plus,
   Search,
   Edit,

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  User, Settings, LogOut, ChevronDown, Sun, Moon, Sliders
+  LogOut, Sun, Moon, Sliders
 } from "lucide-react";
 
 const MENU = [
@@ -20,7 +20,6 @@ const MENU = [
 
 export default function Configuracoes() {
   const [darkMode, setDarkMode] = useState(false);
-  const [userOpen, setUserOpen] = useState(false);
 
   return (
     <motion.div

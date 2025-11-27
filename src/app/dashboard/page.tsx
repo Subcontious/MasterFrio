@@ -15,7 +15,6 @@ import {
   Wrench,
   Users,
   Package,
-  ArrowUpRight,
 } from 'lucide-react';
 
 const MENU = [
