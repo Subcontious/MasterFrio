@@ -16,6 +16,7 @@ import {
   Users,
   Package,
 } from 'lucide-react';
+import { useRouter } from "next/navigation";
 
 const MENU = [
   { key: 'dashboard', name: 'Dashboard', icon: '/Images/Dashboard.png', path: '/dashboard' },
@@ -29,6 +30,7 @@ const MENU = [
 
 export default function Dashboard() {
   // Dark mode com inicialização segura (evita hydration error)
+  const router = useRouter();
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     try {
@@ -111,7 +113,7 @@ export default function Dashboard() {
 
           <div className="mt-6">
             <button
-              onClick={() => alert('Logout implementado!')}
+              onClick={() => router.push("/")}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border text-muted-foreground hover:bg-muted transition-colors"
             >
               <LogOut size={18} />

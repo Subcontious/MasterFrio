@@ -7,6 +7,7 @@ import Link from "next/link";
 import {
   LogOut, Sun, Moon, Sliders
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const MENU = [
   { key: "dashboard", name: "Dashboard", icon: "/Images/Dashboard.png", path: "/dashboard" },
@@ -19,6 +20,7 @@ const MENU = [
 ];
 
 export default function Configuracoes() {
+  const router = useRouter();
   const [darkMode, setDarkMode] = useState(false);
 
   return (
@@ -57,14 +59,14 @@ export default function Configuracoes() {
             </nav>
           </div>
           <div className="mt-6">
-            <button className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
-              darkMode ? "bg-blue-500/10 border-blue-800 text-blue-300 hover:bg-blue-500/20"
-                : "bg-blue-500/10 border-blue-100 text-blue-600 hover:bg-blue-500/20"
-            }`}>
+            <button
+              onClick={() => router.push("/")}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border text-muted-foreground hover:bg-muted transition-colors"
+            >
               <LogOut size={18} />
               <span className="text-sm font-semibold">Logout</span>
             </button>
-            <div className={`text-[12px] mt-6 text-center ${darkMode ? "text-blue-400/60" : "text-[#7b8cbf]"}`}>© 2025 Masterfrio</div>
+            <div className="text-xs mt-6 text-center text-muted-foreground">© 2025 Masterfrio</div>
           </div>
         </aside>
 

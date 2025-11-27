@@ -16,6 +16,7 @@ import {
   Edit,
   Search as SearchIcon,
 } from 'lucide-react';
+import { useRouter } from "next/navigation";
 
 type UserItem = {
   id: number;
@@ -42,6 +43,7 @@ const initialUsers: UserItem[] = [
 ];
 
 export default function Administrador(): JSX.Element {
+  const router = useRouter();
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     try {
       const v = localStorage.getItem('mf:dark');
@@ -151,8 +153,8 @@ export default function Administrador(): JSX.Element {
 
           <div className="mt-6">
             <button
+              onClick={() => router.push("/")}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border text-muted-foreground hover:bg-muted transition-colors"
-              onClick={() => alert('Logout (implemente a lógica real)')}
             >
               <LogOut size={18} />
               <span className="text-sm font-semibold">Logout</span>

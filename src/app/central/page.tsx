@@ -17,6 +17,7 @@ import {
   Package,
   Database,
 } from 'lucide-react';
+import { useRouter } from "next/navigation";
 
 const MENU = [
   { key: 'dashboard', name: 'Dashboard', icon: '/Images/Dashboard.png', path: '/dashboard' },
@@ -29,6 +30,7 @@ const MENU = [
 ] as const;
 
 export default function CentralDados() {
+  const router = useRouter();
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     try {
       const v = localStorage.getItem('mf:dark');
@@ -122,7 +124,7 @@ export default function CentralDados() {
 
           <div className="mt-6">
             <button
-              onClick={() => alert('Logout')}
+              onClick={() => router.push("/")}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border text-muted-foreground hover:bg-muted transition-colors"
             >
               <LogOut size={18} />
